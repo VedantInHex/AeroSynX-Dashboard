@@ -2,10 +2,10 @@ import asyncio
 import json
 import os
 import websockets
-from predict import predict_engine_decision
+from ai_digital_twin import AIDigitalTwin
 
 connected_clients = set()
-
+ai_twin = AIDigitalTwin()
 async def telemetry_listener():
     uri = os.environ.get(
         "VIRTUAL_ENGINE_WS_URL",
@@ -17,7 +17,13 @@ async def telemetry_listener():
                 print("[AI Engine] Connected to Virtual Engine telemetry stream on port 8080.")
                 async for message in ws:
                     packet = json.loads(message)
-                    decision = predict_engine_decision(packet)
+                    result = ai_twin.process(packet)
+                    decision = {
+                    "timestamp": result["timestamp"],
+                    "current_state": result["current_state"],
+                    "ai": result["ai_prediction"],
+                    "health_score": result["health_score"],
+                    }
 
                     if connected_clients and decision:
                         payload = json.dumps(decision)
